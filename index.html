@@ -1,779 +1,282 @@
 <!doctype html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Item Capture</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    audio {
-      display: block;
-      width: 100%;
-    }
-
-    html, body {
-      width: 100%;
-      min-height: 100%;
-      overflow-x: hidden;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 0;
-      color: #333;
-      padding-bottom: calc(env(safe-area-inset-bottom) + 140px);
-    }
-
-    .container {
-      width: 100vw;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: visible;
-      overflow-x: hidden;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    .back-btn {
-      background: white;
-      border: none;
-      color: #667eea;
-      padding: 28px 20px;
-      border-radius: 0;
-      font-size: 26px;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      margin: 0;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
-    }
-
-    .header {
-      background: white;
-      border-radius: 0;
-      padding: 32px 20px;
-      margin: 0;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-
-    .header h1 {
-      font-size: 48px;
-      font-weight: 800;
-      color: #667eea;
-      margin-bottom: 16px;
-      line-height: 1.2;
-    }
-
-    .header p {
-      color: #666;
-      font-size: 22px;
-      line-height: 1.6;
-      font-weight: 500;
-    }
-
-    .card {
-      background: white;
-      border-radius: 0;
-      padding: 28px 20px 80px 20px;
-      margin: 0;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      margin-bottom: 16px;
-      display: flow-root;
-    }
-
-    .card-title {
-      font-size: 36px;
-      font-weight: 800;
-      color: #333;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .card-title::before {
-      content: attr(data-step);
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid #667eea;
-      border-radius: 50%;
-      font-size: 28px;
-      font-weight: 800;
-      color: #667eea;
-      background: white;
-      flex-shrink: 0;
-      transition: all 0.4s ease;
-    }
-
-    .card-title.completed::before {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      color: white;
-      border-color: #11998e;
-    }
-
-    .card-description {
-      color: #666;
-      font-size: 22px;
-      margin-bottom: 24px;
-      line-height: 1.7;
-      font-weight: 500;
-    }
-
-    .photo-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-bottom: 20px;
-    }
-
-    .photo-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 40px 20px;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-      border: 3px solid #cbd5e0;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 700;
-      color: #667eea;
-      font-size: 22px;
-    }
-
-    .photo-btn .icon {
-      font-size: 56px;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .file-name {
-      padding: 18px;
-      background: #e8f4f8;
-      border-radius: 10px;
-      font-size: 20px;
-      color: #0a7;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-    }
-
-    .file-name.show {
-      display: flex;
-    }
-
-    .file-name::before {
-      content: '✓';
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    .button-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .btn {
-      padding: 32px 20px;
-      border: none;
-      border-radius: 14px;
-      font-size: 24px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-      color: white;
-      padding: 36px 20px;
-      font-size: 28px;
-      transition: all 0.4s ease;
-      margin: 0;
-      border-radius: 0;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      font-weight: 700;
-    }
-
-    .btn-submit.success {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .status {
-      background: white;
-      border-radius: 0;
-      padding: 24px 20px;
-      margin: 0;
-      text-align: center;
-      font-size: 22px;
-      font-weight: 700;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      display: none;
-      white-space: pre-line;
-    }
-
-    .status.show {
-      display: block;
-    }
-
-    .status.muted {
-      background: #f5f7fa;
-      color: #666;
-    }
-
-    .status.ok {
-      background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-      color: #0a7;
-    }
-
-    .status.err {
-      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-      color: #c00;
-    }
-
-    .recording-indicator {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 20px;
-      background: #fff5f5;
-      border: 3px solid #f5576c;
-      border-radius: 14px;
-      margin-top: 20px;
-      color: #f5576c;
-      font-weight: 700;
-      font-size: 22px;
-    }
-
-    .recording-indicator.show {
-      display: flex;
-    }
-
-    .audio-status {
-      margin-top: 20px;
-      padding: 18px;
-      background: #e8f4f8;
-      border-radius: 10px;
-      font-size: 20px;
-      color: #0a7;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-    }
-
-    .audio-status.show {
-      display: flex;
-    }
-
-    .audio-status::before {
-      content: '✓';
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    .photo-preview {
-      display: none;
-      width: 100%;
-      max-height: 320px;
-      object-fit: cover;
-      border-radius: 14px;
-      margin-top: 16px;
-      border: 2px solid #e8ecf1;
-    }
-
-    .photo-preview.show {
-      display: block;
-    }
-
-    .audio-preview-container {
-      margin-top: 16px;
-      margin-bottom: 24px;
-      padding: 10px 0;
-      display: block;
-      clear: both;
-    }
-
-    #audioPreview {
-      display: block !important;
-      width: 100% !important;
-      height: 64px !important;
-      margin-bottom: 20px !important;
-    }
-
-    #audioPreview[style*="display:none"] {
-      display: none !important;
-    }
-
-    @media (min-width: 768px) {
-      .container {
-        width: 100%;
-        height: auto;
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-
-      .header, .back-btn, .card, .btn-submit, .status {
-        border-radius: 12px;
-        margin-bottom: 16px;
-      }
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <button onclick="goBack()" class="back-btn">← Back to Items Home</button>
+  <h2>Item Capture</h2>
 
-    <div class="header">
-      <h1>📸 Item Capture</h1>
-      <p>Capture photos and audio to document items with automatic transcription</p>
-    </div>
-
-    <div class="card">
-      <div class="card-title" id="photoTitle" data-step="1">Photo</div>
-      <div class="card-description">Choose from gallery or take a new photo</div>
-
-      <div class="photo-buttons">
-        <label for="photoGallery" class="photo-btn">
-          <span class="icon">🖼️</span>
-          <span>Choose Photo</span>
-        </label>
-        <label for="photoCamera" class="photo-btn">
-          <span class="icon">📷</span>
-          <span>Take Photo</span>
-        </label>
-      </div>
-
-      <input id="photoGallery" type="file" accept="image/*" />
-      <input id="photoCamera" type="file" accept="image/*" capture="environment" />
-
-      <div id="photoName" class="file-name"></div>
-      <img id="photoPreview" class="photo-preview" alt="Selected photo preview" />
-    </div>
-
-    <div class="card">
-      <div class="card-title" id="audioTitle" data-step="2">Audio Recording</div>
-      <div class="card-description">
-        Press and hold to record audio description and location of the item.
-      </div>
-
-      <div class="button-group" style="grid-template-columns: 1fr;">
-        <button id="holdRec" class="btn btn-primary">🎙️ Hold to Record</button>
-      </div>
-
-      <div id="recordingIndicator" class="recording-indicator">
-        Recording in progress...
-      </div>
-
-      <div id="audioStatus" class="audio-status">
-        Audio recorded successfully
-      </div>
-
-      <div class="audio-preview-container">
-        <audio id="audioPreview" controls style="display:none;"></audio>
-      </div>
-      <div style="height: 10px;"></div>
-    </div>
-
-    <button id="submit" class="btn btn-submit" disabled>✓ Submit Item</button>
-    <div id="status" class="status"></div>
+  <div>
+    <label>Photo</label><br>
+    <input id="photoInput" type="file" accept="image/*" capture="environment">
   </div>
 
-<script>
-  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
+  <br>
 
-  function goBack() {
-    window.open("https://sites.google.com/menascouae.com/snag/home", "_blank");
-  }
+  <div>
+    <button id="recordBtn" type="button">Hold to Record</button>
+    <div id="recordStatus"></div>
+    <audio id="audioPreview" controls style="display:none;"></audio>
+  </div>
 
-  let mediaRecorder = null;
-  let audioStream = null;
-  let audioChunks = [];
-  let recordedAudioBlob = null;
-  let selectedPhotoFile = null;
+  <br>
 
-  let hasPhoto = false;
-  let hasAudio = false;
-  let isSubmitting = false;
-  let isHolding = false;
+  <div>
+    <button id="submitBtn" type="button" disabled>Submit</button>
+  </div>
 
-  const statusEl = document.getElementById("status");
-  const recordingIndicator = document.getElementById("recordingIndicator");
-  const audioStatus = document.getElementById("audioStatus");
-  const photoGalleryInput = document.getElementById("photoGallery");
-  const photoCameraInput = document.getElementById("photoCamera");
-  const photoNameEl = document.getElementById("photoName");
-  const photoPreviewEl = document.getElementById("photoPreview");
-  const submitBtn = document.getElementById("submit");
-  const holdBtn = document.getElementById("holdRec");
-  const audioPreviewEl = document.getElementById("audioPreview");
+  <br>
 
-  let audioPreviewUrl = null;
+  <div id="status"></div>
 
-  const setStatus = (t, cls = "muted") => {
-    statusEl.className = "status show " + cls;
-    statusEl.textContent = t;
-  };
+  <script>
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
 
-  function updateSubmitState() {
-    const ready = hasPhoto && hasAudio;
-    submitBtn.disabled = isSubmitting || !ready;
-  }
+    let mediaRecorder = null;
+    let audioStream = null;
+    let audioChunks = [];
+    let recordedAudioBlob = null;
+    let selectedPhotoFile = null;
+    let isHolding = false;
+    let isSubmitting = false;
+    let audioPreviewUrl = null;
 
-  function setUiLocked(locked) {
-    isSubmitting = locked;
-    photoGalleryInput.disabled = locked;
-    photoCameraInput.disabled = locked;
-    holdBtn.disabled = locked;
-    updateSubmitState();
-  }
+    const photoInput = document.getElementById("photoInput");
+    const recordBtn = document.getElementById("recordBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusEl = document.getElementById("status");
+    const recordStatusEl = document.getElementById("recordStatus");
+    const audioPreviewEl = document.getElementById("audioPreview");
 
-  function showPhotoPreview(file) {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    photoPreviewEl.src = url;
-    photoPreviewEl.className = "photo-preview show";
-    photoPreviewEl.onload = () => URL.revokeObjectURL(url);
-  }
+    function setStatus(text) {
+      statusEl.textContent = text || "";
+    }
 
-  function showAudioPreview(blob) {
-    try {
-      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
-    } catch (e) {}
+    function setRecordStatus(text) {
+      recordStatusEl.textContent = text || "";
+    }
 
-    audioPreviewUrl = URL.createObjectURL(blob);
-    audioPreviewEl.src = audioPreviewUrl;
-    audioPreviewEl.style.display = "block";
-    audioPreviewEl.load();
-  }
+    function updateSubmitState() {
+      submitBtn.disabled = isSubmitting || !selectedPhotoFile || !recordedAudioBlob;
+    }
 
-  function resetAudioPreview() {
-    try {
-      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
-    } catch (e) {}
-    audioPreviewUrl = null;
-    audioPreviewEl.src = "";
-    audioPreviewEl.style.display = "none";
-  }
-
-  function toBase64(fileOrBlob) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result.split(",")[1]);
-      r.onerror = reject;
-      r.readAsDataURL(fileOrBlob);
-    });
-  }
-
-  function getSupportedMimeType() {
-    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-    for (const t of types) {
+    function resetAudioPreview() {
       try {
-        if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
       } catch (e) {}
+      audioPreviewUrl = null;
+      audioPreviewEl.src = "";
+      audioPreviewEl.style.display = "none";
     }
-    return "";
-  }
 
-  function getMicErrorMessage(err) {
-    const name = err?.name || "UnknownError";
-    const msg = err?.message || "";
+    function showAudioPreview(blob) {
+      resetAudioPreview();
+      audioPreviewUrl = URL.createObjectURL(blob);
+      audioPreviewEl.src = audioPreviewUrl;
+      audioPreviewEl.style.display = "block";
+      audioPreviewEl.load();
+    }
 
-    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-      return "Microphone access failed.";
+    function toBase64(fileOrBlob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result || "";
+          const base64 = String(result).split(",")[1] || "";
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(fileOrBlob);
+      });
     }
-    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
-      return "No microphone found on this device.";
-    }
-    if (name === "NotReadableError" || name === "TrackStartError") {
-      return "Microphone is busy or unavailable.";
-    }
-    if (name === "SecurityError") {
-      return "Browser security blocked microphone access.";
-    }
-    return "Mic error: " + name + (msg ? " - " + msg : "");
-  }
 
-  async function startRecording() {
-    audioStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
+    function getSupportedMimeType() {
+      const types = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4"
+      ];
+      for (const type of types) {
+        try {
+          if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) {
+            return type;
+          }
+        } catch (e) {}
       }
-    });
+      return "";
+    }
 
-    audioChunks = [];
-    recordedAudioBlob = null;
-    audioStatus.className = "audio-status";
+    async function startRecording() {
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const mimeType = getSupportedMimeType();
-    mediaRecorder = mimeType
-      ? new MediaRecorder(audioStream, { mimeType: mimeType })
-      : new MediaRecorder(audioStream);
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) audioChunks.push(e.data);
-    };
-
-    mediaRecorder.onerror = (e) => {
-      console.error("MediaRecorder error:", e);
-      setStatus("Recording error.", "err");
-    };
-
-    mediaRecorder.onstop = () => {
-      const finalType = mediaRecorder?.mimeType || mimeType || "audio/webm";
-      recordedAudioBlob = new Blob(audioChunks, { type: finalType });
-
-      showAudioPreview(recordedAudioBlob);
-
-      try {
-        audioStream && audioStream.getTracks().forEach(t => t.stop());
-      } catch (e) {}
-      audioStream = null;
-
-      setStatus("Audio recorded OK. Now press Submit.", "ok");
-      audioStatus.className = "audio-status show";
-      document.getElementById("audioTitle").classList.add("completed");
-
-      hasAudio = true;
+      audioChunks = [];
+      recordedAudioBlob = null;
       updateSubmitState();
-    };
 
-    mediaRecorder.start();
-  }
+      const mimeType = getSupportedMimeType();
+      mediaRecorder = mimeType
+        ? new MediaRecorder(audioStream, { mimeType })
+        : new MediaRecorder(audioStream);
 
-  function stopRecordingIfActive() {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-    }
-  }
-
-  function endHold() {
-    if (!isHolding) return;
-    isHolding = false;
-
-    recordingIndicator.className = "recording-indicator";
-    holdBtn.textContent = "🎙️ Hold to Record";
-
-    stopRecordingIfActive();
-  }
-
-  photoGalleryInput.addEventListener("change", (e) => {
-    if (e.target.files[0]) {
-      selectedPhotoFile = e.target.files[0];
-      photoNameEl.textContent = e.target.files[0].name;
-      photoNameEl.className = "file-name show";
-      showPhotoPreview(selectedPhotoFile);
-
-      photoCameraInput.value = "";
-      document.getElementById("photoTitle").classList.add("completed");
-
-      hasPhoto = true;
-      updateSubmitState();
-    }
-  });
-
-  photoCameraInput.addEventListener("change", (e) => {
-    if (e.target.files[0]) {
-      selectedPhotoFile = e.target.files[0];
-      photoNameEl.textContent = "Photo captured";
-      photoNameEl.className = "file-name show";
-      showPhotoPreview(selectedPhotoFile);
-
-      photoGalleryInput.value = "";
-      document.getElementById("photoTitle").classList.add("completed");
-
-      hasPhoto = true;
-      updateSubmitState();
-    }
-  });
-
-  holdBtn.addEventListener("pointerdown", async () => {
-    if (isSubmitting || isHolding) return;
-
-    if (!window.isSecureContext) {
-      setStatus("This page is not secure enough for microphone access.", "err");
-      return;
-    }
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setStatus("This browser does not support microphone recording.", "err");
-      return;
-    }
-
-    if (!window.MediaRecorder) {
-      setStatus("This browser does not support audio recording.", "err");
-      return;
-    }
-
-    isHolding = true;
-
-    try {
-      await startRecording();
-      recordingIndicator.className = "recording-indicator show";
-      setStatus("Recording... release to stop", "muted");
-      holdBtn.textContent = "🔴 Recording... release to stop";
-    } catch (err) {
-      console.error("startRecording failed:", err);
-      isHolding = false;
-      recordingIndicator.className = "recording-indicator";
-      holdBtn.textContent = "🎙️ Hold to Record";
-
-      try {
-        audioStream && audioStream.getTracks().forEach(t => t.stop());
-      } catch (e) {}
-      audioStream = null;
-
-      setStatus(getMicErrorMessage(err), "err");
-    }
-  });
-
-  holdBtn.addEventListener("pointerup", endHold);
-  holdBtn.addEventListener("pointercancel", endHold);
-
-  submitBtn.onclick = async () => {
-    try {
-      if (isSubmitting) return;
-
-      const photoFile = selectedPhotoFile;
-      const audioSource = recordedAudioBlob;
-
-      if (!photoFile) return setStatus("Please select/capture a photo.", "err");
-      if (!audioSource) return setStatus("Please record audio first.", "err");
-
-      setUiLocked(true);
-      setStatus("Preparing files...", "muted");
-
-      const photoB64 = await toBase64(photoFile);
-      const audioB64 = await toBase64(audioSource);
-      const audioMime = audioSource.type || "application/octet-stream";
-
-      let ext = ".webm";
-      if (audioMime.includes("mp4")) ext = ".mp4";
-
-      const payload = {
-        photo: {
-          filename: photoFile.name || ("photo_" + Date.now() + ".jpg"),
-          mimeType: photoFile.type || "image/jpeg",
-          base64Data: photoB64
-        },
-        audio: {
-          filename: "audio_" + Date.now() + ext,
-          mimeType: audioMime,
-          base64Data: audioB64
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunks.push(e.data);
         }
       };
 
-      setStatus("Uploading + transcribing...", "muted");
-      submitBtn.className = "btn btn-submit success";
+      mediaRecorder.onstop = () => {
+        const finalMime = mediaRecorder && mediaRecorder.mimeType ? mediaRecorder.mimeType : (mimeType || "audio/webm");
+        recordedAudioBlob = new Blob(audioChunks, { type: finalMime });
+        showAudioPreview(recordedAudioBlob);
+        setRecordStatus("Audio recorded");
+        try {
+          if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+        audioStream = null;
+        updateSubmitState();
+      };
 
-      const res = await fetch(WEBAPP_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payload)
-      });
+      mediaRecorder.start();
+    }
 
-      const result = await res.json();
+    function stopRecordingIfActive() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    }
 
-      if (!result.ok) {
-        throw new Error(result.error || "Submit failed");
+    photoInput.addEventListener("change", (e) => {
+      selectedPhotoFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+      if (selectedPhotoFile) {
+        setStatus("Photo selected");
+      }
+      updateSubmitState();
+    });
+
+    recordBtn.addEventListener("pointerdown", async () => {
+      if (isHolding || isSubmitting) return;
+
+      if (!window.isSecureContext) {
+        setStatus("Microphone requires HTTPS.");
+        return;
       }
 
-      setStatus("Submitted ✅ Transcript saved in sheet.", "ok");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("This browser does not support microphone recording.");
+        return;
+      }
 
-      photoGalleryInput.value = "";
-      photoCameraInput.value = "";
-      selectedPhotoFile = null;
+      if (!window.MediaRecorder) {
+        setStatus("This browser does not support audio recording.");
+        return;
+      }
 
-      photoNameEl.className = "file-name";
-      photoNameEl.textContent = "";
-
-      photoPreviewEl.src = "";
-      photoPreviewEl.className = "photo-preview";
-
-      audioStatus.className = "audio-status";
-      mediaRecorder = null;
-      audioChunks = [];
-      recordedAudioBlob = null;
-      resetAudioPreview();
+      isHolding = true;
+      setRecordStatus("Recording... release to stop");
 
       try {
-        audioStream && audioStream.getTracks().forEach(t => t.stop());
-      } catch (e) {}
-      audioStream = null;
+        await startRecording();
+      } catch (err) {
+        isHolding = false;
+        setRecordStatus("");
+        setStatus("Recording failed: " + (err && err.message ? err.message : err));
+        try {
+          if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+        audioStream = null;
+      }
+    });
 
+    function endHold() {
+      if (!isHolding) return;
       isHolding = false;
-      recordingIndicator.className = "recording-indicator";
-      holdBtn.textContent = "🎙️ Hold to Record";
-
-      document.getElementById("photoTitle").classList.remove("completed");
-      document.getElementById("audioTitle").classList.remove("completed");
-
-      hasPhoto = false;
-      hasAudio = false;
-
-      setTimeout(() => {
-        submitBtn.className = "btn btn-submit";
-      }, 2000);
-
-      setUiLocked(false);
-      updateSubmitState();
-
-    } catch (e) {
-      setStatus("Error: " + (e && e.message ? e.message : e), "err");
-      submitBtn.className = "btn btn-submit";
-      setUiLocked(false);
-      updateSubmitState();
+      setRecordStatus("Stopping...");
+      stopRecordingIfActive();
     }
-  };
 
-  updateSubmitState();
-</script>
+    recordBtn.addEventListener("pointerup", endHold);
+    recordBtn.addEventListener("pointercancel", endHold);
+
+    submitBtn.addEventListener("click", async () => {
+      if (isSubmitting) return;
+      if (!selectedPhotoFile) {
+        setStatus("Please choose a photo.");
+        return;
+      }
+      if (!recordedAudioBlob) {
+        setStatus("Please record audio.");
+        return;
+      }
+
+      isSubmitting = true;
+      updateSubmitState();
+      setStatus("Preparing upload...");
+
+      try {
+        const photoB64 = await toBase64(selectedPhotoFile);
+        const audioB64 = await toBase64(recordedAudioBlob);
+        const audioMime = recordedAudioBlob.type || "application/octet-stream";
+
+        let ext = ".webm";
+        if (audioMime.includes("mp4")) ext = ".mp4";
+
+        const payload = {
+          photo: {
+            filename: selectedPhotoFile.name || ("photo_" + Date.now() + ".jpg"),
+            mimeType: selectedPhotoFile.type || "image/jpeg",
+            base64Data: photoB64
+          },
+          audio: {
+            filename: "audio_" + Date.now() + ext,
+            mimeType: audioMime,
+            base64Data: audioB64
+          }
+        };
+
+        setStatus("Submitting...");
+
+        const res = await fetch(WEBAPP_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          throw new Error("Server returned invalid response: " + text);
+        }
+
+        if (!result.ok) {
+          throw new Error(result.error || "Submit failed");
+        }
+
+        setStatus("Submitted successfully");
+
+        photoInput.value = "";
+        selectedPhotoFile = null;
+        recordedAudioBlob = null;
+        audioChunks = [];
+        mediaRecorder = null;
+        setRecordStatus("");
+        resetAudioPreview();
+
+      } catch (err) {
+        setStatus("Error: " + (err && err.message ? err.message : err));
+      } finally {
+        isSubmitting = false;
+        updateSubmitState();
+      }
+    });
+
+    updateSubmitState();
+  </script>
 </body>
 </html>
