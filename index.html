@@ -6,6 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <title>Item Capture</title>
   <style>
     * {
       margin: 0;
@@ -59,10 +60,6 @@
       margin: 0;
       transition: all 0.3s ease;
       box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
-    }
-
-    .back-btn:active {
-      transform: translateY(0);
     }
 
     .header {
@@ -163,15 +160,6 @@
       font-size: 22px;
     }
 
-    .photo-btn:active {
-      transform: scale(0.98);
-    }
-
-    .photo-btn:hover {
-      border-color: #667eea;
-      background: linear-gradient(135deg, #e8ecf1 0%, #dde4ed 100%);
-    }
-
     .photo-btn .icon {
       font-size: 56px;
     }
@@ -222,34 +210,9 @@
       touch-action: manipulation;
     }
 
-    .btn:active {
-      transform: translateY(2px);
-    }
-
     .btn-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 6px 24px rgba(102, 126, 234, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      box-shadow: 0 6px 24px rgba(245, 87, 108, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
     }
 
     .btn-submit {
@@ -267,21 +230,14 @@
       font-weight: 700;
     }
 
-    .btn-submit:hover:not(:disabled) {
-      box-shadow: 0 8px 32px rgba(33, 150, 243, 0.4);
-      transform: translateY(-2px);
-    }
-
     .btn-submit.success {
       background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     }
 
-    .btn-submit.success:hover {
-      box-shadow: 0 8px 32px rgba(56, 239, 125, 0.4);
-    }
-
-    .btn-submit:active {
-      transform: translateY(2px);
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .status {
@@ -299,18 +255,6 @@
 
     .status.show {
       display: block;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
 
     .status.muted {
@@ -341,27 +285,10 @@
       color: #f5576c;
       font-weight: 700;
       font-size: 22px;
-      animation: pulse 1.5s ease-in-out infinite;
     }
 
     .recording-indicator.show {
       display: flex;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-
-    .recording-indicator::before {
-      content: '🔴';
-      font-size: 28px;
-      animation: blink 1s ease-in-out infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
     }
 
     .audio-status {
@@ -429,28 +356,7 @@
         padding: 20px;
       }
 
-      .header {
-        border-radius: 16px;
-        margin-bottom: 16px;
-      }
-
-      .back-btn {
-        border: 2px solid #667eea;
-        border-radius: 12px;
-        margin-bottom: 16px;
-      }
-
-      .card {
-        border-radius: 16px;
-        margin-bottom: 16px;
-      }
-
-      .btn-submit {
-        margin-bottom: 16px;
-        border-radius: 12px;
-      }
-
-      .status {
+      .header, .back-btn, .card, .btn-submit, .status {
         border-radius: 12px;
         margin-bottom: 16px;
       }
@@ -459,9 +365,7 @@
 </head>
 <body>
   <div class="container">
-    <button onclick="goBack()" class="back-btn">
-      ← Back to Items Home
-    </button>
+    <button onclick="goBack()" class="back-btn">← Back to Items Home</button>
 
     <div class="header">
       <h1>📸 Item Capture</h1>
@@ -515,15 +419,14 @@
     </div>
 
     <button id="submit" class="btn btn-submit" disabled>✓ Submit Item</button>
-
     <div id="status" class="status"></div>
   </div>
+
 <script>
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
+
   function goBack() {
-    window.open(
-      "https://sites.google.com/menascouae.com/snag/home",
-      "_blank"
-    );
+    window.open("https://sites.google.com/menascouae.com/snag/home", "_blank");
   }
 
   let mediaRecorder = null;
@@ -606,11 +509,7 @@
   }
 
   function getSupportedMimeType() {
-    const types = [
-      "audio/webm;codecs=opus",
-      "audio/webm",
-      "audio/mp4"
-    ];
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
     for (const t of types) {
       try {
         if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
@@ -624,7 +523,7 @@
     const msg = err?.message || "";
 
     if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-      return "Microphone access failed. Please reload once and try again.";
+      return "Microphone access failed.";
     }
     if (name === "NotFoundError" || name === "DevicesNotFoundError") {
       return "No microphone found on this device.";
@@ -733,7 +632,7 @@
     }
   });
 
-  holdBtn.addEventListener("pointerdown", async (e) => {
+  holdBtn.addEventListener("pointerdown", async () => {
     if (isSubmitting || isHolding) return;
 
     if (!window.isSecureContext) {
@@ -776,9 +675,6 @@
   holdBtn.addEventListener("pointerup", endHold);
   holdBtn.addEventListener("pointercancel", endHold);
 
-  // IMPORTANT: removed pointerleave because it can kill recording immediately
-  // holdBtn.addEventListener("pointerleave", endHold);
-
   submitBtn.onclick = async () => {
     try {
       if (isSubmitting) return;
@@ -815,55 +711,59 @@
       setStatus("Uploading + transcribing...", "muted");
       submitBtn.className = "btn btn-submit success";
 
-      google.script.run
-        .withSuccessHandler(() => {
-          setStatus("Submitted OK. Transcript saved in sheet.", "ok");
+      const res = await fetch(WEBAPP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      });
 
-          photoGalleryInput.value = "";
-          photoCameraInput.value = "";
-          selectedPhotoFile = null;
+      const result = await res.json();
 
-          photoNameEl.className = "file-name";
-          photoNameEl.textContent = "";
+      if (!result.ok) {
+        throw new Error(result.error || "Submit failed");
+      }
 
-          photoPreviewEl.src = "";
-          photoPreviewEl.className = "photo-preview";
+      setStatus("Submitted ✅ Transcript saved in sheet.", "ok");
 
-          audioStatus.className = "audio-status";
-          mediaRecorder = null;
-          audioChunks = [];
-          recordedAudioBlob = null;
-          resetAudioPreview();
+      photoGalleryInput.value = "";
+      photoCameraInput.value = "";
+      selectedPhotoFile = null;
 
-          try {
-            audioStream && audioStream.getTracks().forEach(t => t.stop());
-          } catch (e) {}
-          audioStream = null;
+      photoNameEl.className = "file-name";
+      photoNameEl.textContent = "";
 
-          isHolding = false;
-          recordingIndicator.className = "recording-indicator";
-          holdBtn.textContent = "🎙️ Hold to Record";
+      photoPreviewEl.src = "";
+      photoPreviewEl.className = "photo-preview";
 
-          document.getElementById("photoTitle").classList.remove("completed");
-          document.getElementById("audioTitle").classList.remove("completed");
+      audioStatus.className = "audio-status";
+      mediaRecorder = null;
+      audioChunks = [];
+      recordedAudioBlob = null;
+      resetAudioPreview();
 
-          hasPhoto = false;
-          hasAudio = false;
+      try {
+        audioStream && audioStream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+      audioStream = null;
 
-          setTimeout(() => {
-            submitBtn.className = "btn btn-submit";
-          }, 2000);
+      isHolding = false;
+      recordingIndicator.className = "recording-indicator";
+      holdBtn.textContent = "🎙️ Hold to Record";
 
-          setUiLocked(false);
-          updateSubmitState();
-        })
-        .withFailureHandler((e) => {
-          setStatus("Error: " + (e && e.message ? e.message : e), "err");
-          submitBtn.className = "btn btn-submit";
-          setUiLocked(false);
-          updateSubmitState();
-        })
-        .submitSnag(payload);
+      document.getElementById("photoTitle").classList.remove("completed");
+      document.getElementById("audioTitle").classList.remove("completed");
+
+      hasPhoto = false;
+      hasAudio = false;
+
+      setTimeout(() => {
+        submitBtn.className = "btn btn-submit";
+      }, 2000);
+
+      setUiLocked(false);
+      updateSubmitState();
 
     } catch (e) {
       setStatus("Error: " + (e && e.message ? e.message : e), "err");
