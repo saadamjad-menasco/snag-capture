@@ -1,245 +1,381 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Item Capture</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Item Capture</title>
+  <style>
+    body {
+      margin: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
 
-<style>
-body{
-  margin:0;
-  background:#ffffff;
-  font-family:Arial,sans-serif;
-  padding:40px 20px;
-}
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+    }
 
-.wrap{
-  max-width:500px;
-  margin:auto;
-}
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 22px;
+      margin: 14px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
 
-button{
-  width:100%;
-  border:none;
-  border-radius:16px;
-  padding:26px;
-  margin:16px 0;
-  font-size:22px;
-  font-weight:700;
-  color:#fff;
-  cursor:pointer;
-  background:linear-gradient(135deg,#2196F3 0%,#1976D2 100%);
-  box-shadow:0 8px 20px rgba(0,0,0,0.15);
-}
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
+    .hidden {
+      display: none;
+    }
 
-.hidden{
-  display:none;
-}
+    #photoPreview {
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 12px;
+      display: none;
+    }
 
-#audioPreview{
-  width:100%;
-  margin-top:10px;
-}
+    #audioPreview {
+      width: 100%;
+      margin-top: 10px;
+      display: none;
+    }
 
-#status{
-  text-align:center;
-  margin-top:10px;
-  font-weight:600;
-}
-</style>
+    #status {
+      text-align: center;
+      margin-top: 12px;
+      font-weight: 600;
+      color: #333;
+      min-height: 24px;
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <button id="backBtn" type="button">← Back</button>
 
-<div class="wrap">
+    <input id="photoInput" type="file" accept="image/*" capture="environment" class="hidden">
+    <button id="photoBtn" type="button">Take Photo</button>
+    <img id="photoPreview" alt="Photo preview">
 
-<input id="photoInput" type="file" accept="image/*" capture="environment" class="hidden">
+    <button id="recordBtn" type="button">Hold to Record</button>
+    <audio id="audioPreview" controls></audio>
 
-<button id="photoBtn">Take Photo</button>
+    <button id="submitBtn" type="button" disabled>Submit</button>
 
-<button id="recordBtn">Hold to Record</button>
+    <div id="status"></div>
+  </div>
 
-<audio id="audioPreview" controls class="hidden"></audio>
+  <script>
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
+    const BACK_URL = "https://sites.google.com/menascouae.com/snag/home";
 
-<button id="submitBtn" disabled>Submit</button>
+    let selectedPhotoFile = null;
+    let photoPreviewUrl = null;
 
-<div id="status"></div>
+    let mediaRecorder = null;
+    let audioStream = null;
+    let audioChunks = [];
+    let recordedAudioBlob = null;
+    let audioPreviewUrl = null;
 
-</div>
+    let micPrimed = false;
+    let isHolding = false;
+    let isSubmitting = false;
 
-<script>
+    const backBtn = document.getElementById("backBtn");
+    const photoInput = document.getElementById("photoInput");
+    const photoBtn = document.getElementById("photoBtn");
+    const photoPreview = document.getElementById("photoPreview");
+    const recordBtn = document.getElementById("recordBtn");
+    const audioPreview = document.getElementById("audioPreview");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusEl = document.getElementById("status");
 
-const WEBAPP_URL="https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
+    function setStatus(text) {
+      statusEl.textContent = text || "";
+    }
 
-let selectedPhotoFile=null;
-let mediaRecorder=null;
-let audioStream=null;
-let audioChunks=[];
-let recordedAudioBlob=null;
-let isHolding=false;
-let isSubmitting=false;
-let audioPreviewUrl=null;
+    function updateSubmit() {
+      submitBtn.disabled = isSubmitting || !selectedPhotoFile || !recordedAudioBlob;
+    }
 
-const photoInput=document.getElementById("photoInput");
-const photoBtn=document.getElementById("photoBtn");
-const recordBtn=document.getElementById("recordBtn");
-const submitBtn=document.getElementById("submitBtn");
-const statusEl=document.getElementById("status");
-const audioPreview=document.getElementById("audioPreview");
+    function resetPhotoPreview() {
+      try {
+        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      } catch (e) {}
+      photoPreviewUrl = null;
+      photoPreview.src = "";
+      photoPreview.style.display = "none";
+    }
 
-function setStatus(t){statusEl.textContent=t||"";}
+    function showPhotoPreview(file) {
+      resetPhotoPreview();
+      photoPreviewUrl = URL.createObjectURL(file);
+      photoPreview.src = photoPreviewUrl;
+      photoPreview.style.display = "block";
+    }
 
-function updateSubmit(){
-submitBtn.disabled=isSubmitting||!selectedPhotoFile||!recordedAudioBlob;
-}
+    function resetAudioPreview() {
+      try {
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+      } catch (e) {}
+      audioPreviewUrl = null;
+      audioPreview.src = "";
+      audioPreview.style.display = "none";
+    }
 
-function resetAudio(){
-if(audioPreviewUrl)URL.revokeObjectURL(audioPreviewUrl);
-audioPreviewUrl=null;
-audioPreview.src="";
-audioPreview.classList.add("hidden");
-}
+    function showAudioPreview(blob) {
+      resetAudioPreview();
+      audioPreviewUrl = URL.createObjectURL(blob);
+      audioPreview.src = audioPreviewUrl;
+      audioPreview.style.display = "block";
+      audioPreview.load();
+    }
 
-function showAudio(blob){
-resetAudio();
-audioPreviewUrl=URL.createObjectURL(blob);
-audioPreview.src=audioPreviewUrl;
-audioPreview.classList.remove("hidden");
-}
+    function toBase64(fileOrBlob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          resolve(result.split(",")[1] || "");
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(fileOrBlob);
+      });
+    }
 
-function toBase64(file){
-return new Promise((resolve,reject)=>{
-const reader=new FileReader();
-reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");
-reader.onerror=reject;
-reader.readAsDataURL(file);
-});
-}
+    function getSupportedMimeType() {
+      const types = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4"
+      ];
+      for (const type of types) {
+        try {
+          if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) {
+            return type;
+          }
+        } catch (e) {}
+      }
+      return "";
+    }
 
-function getMime(){
-const types=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
-for(const t of types){
-try{
-if(MediaRecorder.isTypeSupported(t))return t;
-}catch(e){}
-}
-return "";
-}
+    async function primeMicPermissionOnly() {
+      if (micPrimed) return true;
 
-async function startRecording(){
-audioStream=await navigator.mediaDevices.getUserMedia({audio:true});
-audioChunks=[];
-recordedAudioBlob=null;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("Microphone not supported");
+        return false;
+      }
 
-const mime=getMime();
-mediaRecorder=mime?new MediaRecorder(audioStream,{mimeType:mime}):new MediaRecorder(audioStream);
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        s.getTracks().forEach(t => t.stop());
+        micPrimed = true;
+        setStatus("Microphone enabled. Now hold to record.");
+        return true;
+      } catch (err) {
+        setStatus("Microphone permission denied");
+        return false;
+      }
+    }
 
-mediaRecorder.ondataavailable=e=>{
-if(e.data.size>0)audioChunks.push(e.data);
-};
+    async function startRecording() {
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      recordedAudioBlob = null;
+      updateSubmit();
 
-mediaRecorder.onstop=()=>{
-const type=mediaRecorder.mimeType||"audio/webm";
-recordedAudioBlob=new Blob(audioChunks,{type});
-showAudio(recordedAudioBlob);
-recordBtn.textContent="Recorded";
-audioStream.getTracks().forEach(t=>t.stop());
-updateSubmit();
-};
+      const mimeType = getSupportedMimeType();
+      mediaRecorder = mimeType
+        ? new MediaRecorder(audioStream, { mimeType })
+        : new MediaRecorder(audioStream);
 
-mediaRecorder.start();
-}
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
 
-function stopRecording(){
-if(mediaRecorder&&mediaRecorder.state==="recording")mediaRecorder.stop();
-}
+      mediaRecorder.onstop = () => {
+        const finalType = mediaRecorder && mediaRecorder.mimeType ? mediaRecorder.mimeType : "audio/webm";
+        recordedAudioBlob = new Blob(audioChunks, { type: finalType });
+        showAudioPreview(recordedAudioBlob);
+        recordBtn.textContent = "Recorded";
+        setStatus("Audio recorded");
+        try {
+          if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+        audioStream = null;
+        updateSubmit();
+      };
 
-photoBtn.onclick=()=>photoInput.click();
+      mediaRecorder.start();
+    }
 
-photoInput.onchange=e=>{
-selectedPhotoFile=e.target.files[0];
-if(selectedPhotoFile)photoBtn.textContent="Photo Selected";
-updateSubmit();
-};
+    function stopRecordingIfActive() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    }
 
-recordBtn.onpointerdown=async()=>{
-if(isHolding||isSubmitting)return;
-isHolding=true;
-recordBtn.textContent="Recording...";
-await startRecording();
-};
+    function endHold() {
+      if (!isHolding) return;
+      isHolding = false;
+      stopRecordingIfActive();
+    }
 
-function endHold(){
-if(!isHolding)return;
-isHolding=false;
-stopRecording();
-}
+    backBtn.addEventListener("click", () => {
+      window.open(BACK_URL, "_blank");
+    });
 
-recordBtn.onpointerup=endHold;
-recordBtn.onpointercancel=endHold;
+    photoBtn.addEventListener("click", () => {
+      photoInput.click();
+    });
 
-submitBtn.onclick=async()=>{
+    photoInput.addEventListener("change", (e) => {
+      selectedPhotoFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
 
-if(isSubmitting)return;
-isSubmitting=true;
-updateSubmit();
-setStatus("Submitting...");
+      if (selectedPhotoFile) {
+        photoBtn.textContent = "Photo Selected";
+        showPhotoPreview(selectedPhotoFile);
+        setStatus("Photo selected");
+      } else {
+        photoBtn.textContent = "Take Photo";
+        resetPhotoPreview();
+      }
 
-try{
+      updateSubmit();
+    });
 
-const photoB64=await toBase64(selectedPhotoFile);
-const audioB64=await toBase64(recordedAudioBlob);
+    recordBtn.addEventListener("pointerdown", async () => {
+      if (isSubmitting || isHolding) return;
 
-const payload={
-photo:{
-filename:selectedPhotoFile.name,
-mimeType:selectedPhotoFile.type,
-base64Data:photoB64
-},
-audio:{
-filename:"audio_"+Date.now()+".webm",
-mimeType:recordedAudioBlob.type,
-base64Data:audioB64
-}
-};
+      if (!window.isSecureContext) {
+        setStatus("Microphone requires HTTPS");
+        return;
+      }
 
-const res=await fetch(WEBAPP_URL,{
-method:"POST",
-headers:{"Content-Type":"text/plain"},
-body:JSON.stringify(payload)
-});
+      if (!micPrimed) {
+        await primeMicPermissionOnly();
+        return;
+      }
 
-const txt=await res.text();
-const result=JSON.parse(txt);
+      isHolding = true;
+      recordBtn.textContent = "Recording...";
 
-if(!result.ok)throw new Error(result.error||"Submit failed");
+      try {
+        await startRecording();
+      } catch (err) {
+        isHolding = false;
+        recordBtn.textContent = "Hold to Record";
+        setStatus("Recording failed");
+        try {
+          if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+        audioStream = null;
+      }
+    });
 
-setStatus("Submitted");
+    recordBtn.addEventListener("pointerup", endHold);
+    recordBtn.addEventListener("pointercancel", endHold);
 
-photoInput.value="";
-selectedPhotoFile=null;
-recordedAudioBlob=null;
-audioChunks=[];
-recordBtn.textContent="Hold to Record";
-photoBtn.textContent="Take Photo";
-resetAudio();
+    submitBtn.addEventListener("click", async () => {
+      if (isSubmitting) return;
 
-}catch(err){
-setStatus("Error: "+err.message);
-}
+      if (!selectedPhotoFile) {
+        setStatus("Please take photo");
+        return;
+      }
 
-isSubmitting=false;
-updateSubmit();
-};
+      if (!recordedAudioBlob) {
+        setStatus("Please record audio");
+        return;
+      }
 
-updateSubmit();
+      isSubmitting = true;
+      updateSubmit();
+      setStatus("Submitting...");
 
-</script>
+      try {
+        const photoB64 = await toBase64(selectedPhotoFile);
+        const audioB64 = await toBase64(recordedAudioBlob);
+        const audioMime = recordedAudioBlob.type || "application/octet-stream";
 
+        let ext = ".webm";
+        if (audioMime.includes("mp4")) ext = ".mp4";
+
+        const payload = {
+          photo: {
+            filename: selectedPhotoFile.name || ("photo_" + Date.now() + ".jpg"),
+            mimeType: selectedPhotoFile.type || "image/jpeg",
+            base64Data: photoB64
+          },
+          audio: {
+            filename: "audio_" + Date.now() + ext,
+            mimeType: audioMime,
+            base64Data: audioB64
+          }
+        };
+
+        const res = await fetch(WEBAPP_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          throw new Error(text || "Invalid server response");
+        }
+
+        if (!result.ok) {
+          throw new Error(result.error || "Submit failed");
+        }
+
+        setStatus("Submitted");
+
+        photoInput.value = "";
+        selectedPhotoFile = null;
+        photoBtn.textContent = "Take Photo";
+        resetPhotoPreview();
+
+        recordedAudioBlob = null;
+        audioChunks = [];
+        mediaRecorder = null;
+        recordBtn.textContent = "Hold to Record";
+        resetAudioPreview();
+
+        updateSubmit();
+
+      } catch (err) {
+        setStatus("Error: " + (err && err.message ? err.message : err));
+      } finally {
+        isSubmitting = false;
+        updateSubmit();
+      }
+    });
+
+    updateSubmit();
+  </script>
 </body>
 </html>
