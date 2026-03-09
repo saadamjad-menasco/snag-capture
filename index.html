@@ -4,58 +4,103 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Item Capture</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+    }
+
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 26px 18px;
+      margin: 16px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, #5b7cfa 0%, #7a49b6 100%);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      touch-action: manipulation;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #status {
+      margin-top: 12px;
+      color: white;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      min-height: 24px;
+    }
+
+    #audioPreview {
+      width: 100%;
+      margin-top: 8px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Item Capture</h2>
+  <div class="wrap">
+    <input id="photoInput" type="file" accept="image/*" capture="environment" class="hidden" />
+    <button id="photoBtn" class="btn" type="button">📷 Take Photo</button>
 
-  <div>
-    <label>Photo</label><br>
-    <input id="photoInput" type="file" accept="image/*" capture="environment">
+    <button id="recordBtn" class="btn" type="button">🎙️ Hold to Record</button>
+
+    <audio id="audioPreview" controls class="hidden"></audio>
+
+    <button id="submitBtn" class="btn btn-submit" type="button" disabled>✓ Submit</button>
+
+    <div id="status"></div>
   </div>
-
-  <br>
-
-  <div>
-    <button id="recordBtn" type="button">Hold to Record</button>
-    <div id="recordStatus"></div>
-    <audio id="audioPreview" controls style="display:none;"></audio>
-  </div>
-
-  <br>
-
-  <div>
-    <button id="submitBtn" type="button" disabled>Submit</button>
-  </div>
-
-  <br>
-
-  <div id="status"></div>
 
   <script>
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz-VMFotIWEQFgx3goZ2e9PnGOEfeet5WYnS8XvcWQeivqIFlWZGYIGGklmkaZRiCWD/exec";
 
+    let selectedPhotoFile = null;
     let mediaRecorder = null;
     let audioStream = null;
     let audioChunks = [];
     let recordedAudioBlob = null;
-    let selectedPhotoFile = null;
     let isHolding = false;
     let isSubmitting = false;
     let audioPreviewUrl = null;
 
     const photoInput = document.getElementById("photoInput");
+    const photoBtn = document.getElementById("photoBtn");
     const recordBtn = document.getElementById("recordBtn");
     const submitBtn = document.getElementById("submitBtn");
     const statusEl = document.getElementById("status");
-    const recordStatusEl = document.getElementById("recordStatus");
     const audioPreviewEl = document.getElementById("audioPreview");
 
     function setStatus(text) {
       statusEl.textContent = text || "";
-    }
-
-    function setRecordStatus(text) {
-      recordStatusEl.textContent = text || "";
     }
 
     function updateSubmitState() {
@@ -68,14 +113,14 @@
       } catch (e) {}
       audioPreviewUrl = null;
       audioPreviewEl.src = "";
-      audioPreviewEl.style.display = "none";
+      audioPreviewEl.classList.add("hidden");
     }
 
     function showAudioPreview(blob) {
       resetAudioPreview();
       audioPreviewUrl = URL.createObjectURL(blob);
       audioPreviewEl.src = audioPreviewUrl;
-      audioPreviewEl.style.display = "block";
+      audioPreviewEl.classList.remove("hidden");
       audioPreviewEl.load();
     }
 
@@ -83,9 +128,8 @@
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-          const result = reader.result || "";
-          const base64 = String(result).split(",")[1] || "";
-          resolve(base64);
+          const result = String(reader.result || "");
+          resolve(result.split(",")[1] || "");
         };
         reader.onerror = reject;
         reader.readAsDataURL(fileOrBlob);
@@ -110,7 +154,6 @@
 
     async function startRecording() {
       audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
       audioChunks = [];
       recordedAudioBlob = null;
       updateSubmitState();
@@ -130,7 +173,7 @@
         const finalMime = mediaRecorder && mediaRecorder.mimeType ? mediaRecorder.mimeType : (mimeType || "audio/webm");
         recordedAudioBlob = new Blob(audioChunks, { type: finalMime });
         showAudioPreview(recordedAudioBlob);
-        setRecordStatus("Audio recorded");
+        recordBtn.textContent = "✅ Recorded";
         try {
           if (audioStream) audioStream.getTracks().forEach(t => t.stop());
         } catch (e) {}
@@ -147,10 +190,16 @@
       }
     }
 
+    photoBtn.addEventListener("click", () => {
+      photoInput.click();
+    });
+
     photoInput.addEventListener("change", (e) => {
       selectedPhotoFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
       if (selectedPhotoFile) {
-        setStatus("Photo selected");
+        photoBtn.textContent = "✅ Photo Selected";
+      } else {
+        photoBtn.textContent = "📷 Take Photo";
       }
       updateSubmitState();
     });
@@ -159,29 +208,29 @@
       if (isHolding || isSubmitting) return;
 
       if (!window.isSecureContext) {
-        setStatus("Microphone requires HTTPS.");
+        setStatus("Microphone requires HTTPS");
         return;
       }
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus("This browser does not support microphone recording.");
+        setStatus("Mic not supported");
         return;
       }
 
       if (!window.MediaRecorder) {
-        setStatus("This browser does not support audio recording.");
+        setStatus("Recorder not supported");
         return;
       }
 
       isHolding = true;
-      setRecordStatus("Recording... release to stop");
+      recordBtn.textContent = "🔴 Recording...";
 
       try {
         await startRecording();
       } catch (err) {
         isHolding = false;
-        setRecordStatus("");
-        setStatus("Recording failed: " + (err && err.message ? err.message : err));
+        recordBtn.textContent = "🎙️ Hold to Record";
+        setStatus("Recording failed");
         try {
           if (audioStream) audioStream.getTracks().forEach(t => t.stop());
         } catch (e) {}
@@ -192,7 +241,6 @@
     function endHold() {
       if (!isHolding) return;
       isHolding = false;
-      setRecordStatus("Stopping...");
       stopRecordingIfActive();
     }
 
@@ -201,18 +249,11 @@
 
     submitBtn.addEventListener("click", async () => {
       if (isSubmitting) return;
-      if (!selectedPhotoFile) {
-        setStatus("Please choose a photo.");
-        return;
-      }
-      if (!recordedAudioBlob) {
-        setStatus("Please record audio.");
-        return;
-      }
+      if (!selectedPhotoFile || !recordedAudioBlob) return;
 
       isSubmitting = true;
       updateSubmitState();
-      setStatus("Preparing upload...");
+      setStatus("Submitting...");
 
       try {
         const photoB64 = await toBase64(selectedPhotoFile);
@@ -235,8 +276,6 @@
           }
         };
 
-        setStatus("Submitting...");
-
         const res = await fetch(WEBAPP_URL, {
           method: "POST",
           headers: {
@@ -251,7 +290,7 @@
         try {
           result = JSON.parse(text);
         } catch (e) {
-          throw new Error("Server returned invalid response: " + text);
+          throw new Error(text || "Invalid server response");
         }
 
         if (!result.ok) {
@@ -262,10 +301,12 @@
 
         photoInput.value = "";
         selectedPhotoFile = null;
+        photoBtn.textContent = "📷 Take Photo";
+
         recordedAudioBlob = null;
         audioChunks = [];
         mediaRecorder = null;
-        setRecordStatus("");
+        recordBtn.textContent = "🎙️ Hold to Record";
         resetAudioPreview();
 
       } catch (err) {
